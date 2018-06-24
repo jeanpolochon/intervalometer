@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/ScanAndConnect"
+        android:title="Scan and connect" >
+    </item>
+    <item android:id="@+id/Scan"
+        android:title="Scan" >
+    </item>
+    <item android:id="@+id/Help"
+        android:title="Help" >
+    </item>
+    <item android:id="@+id/About"
+        android:title="About" >
+    </item>
+</menu>
