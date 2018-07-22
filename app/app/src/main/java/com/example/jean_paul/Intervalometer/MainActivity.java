@@ -1,6 +1,5 @@
 package com.example.jean_paul.Intervalometer;
 
-import android.Manifest;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -15,7 +14,6 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.ParcelUuid;
 import android.support.design.widget.TabLayout;
@@ -27,12 +25,10 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.NumberPicker;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,14 +37,13 @@ import java.util.Set;
 import java.util.UUID;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity  {
 
-    //private BluetoothManager bluetoothManager;
+    private Menu menu;
+    private BluetoothDevice device;
     private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning  = false;
-    private final static int REQUEST_ENABLE_BT = 1;
-    private final static int REQUEST_FINE_LOCATION = 1;
-    private int SCAN_PERIOD = 20000;
+    private int SCAN_PERIOD = 10000;
     private boolean mConnected = false;
     BluetoothLeScanner mBluetoothLeScanner;
     BluetoothGatt mGatt;
@@ -57,21 +52,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     BtleScanCallback mScanCallback;
     UUID SERVICE_UUID = UUID.fromString("0000a000-0000-1000-8000-00805f9b34fb");
 
-    //private String deviceaddress=("EC:C1:B1:AA:5A:64");
-    //private BluetoothGatt mBluetoothGatt;
-    //private BluetoothDevice device;
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_connect, menu);
+        this.menu=menu;
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
         switch (item.getItemId()) {
             case R.id.ScanAndConnect:
                 startScan(true);
@@ -81,6 +72,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
             case R.id.Disconnect:
                 disconnectGattServer();
+                return true;
+            case R.id.StopScan:
+                stopScan();
                 return true;
             case R.id.Help:
                 showHelp();
@@ -102,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setSupportActionBar(toolbar);
 
         // Create an instance of the tab layout from the view.
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+        TabLayout tabLayout = findViewById(R.id.tab_layout);
         tabLayout.addTab(tabLayout.newTab().setText(R.string.tab_label1));
         tabLayout.addTab(tabLayout.newTab().setText(R.string.tab_label2));
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
@@ -134,36 +128,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    public void onClick(final View v) {
-        switch (v.getId()) {
-            case R.id.settings1: {
-                final AlertDialog.Builder d = new AlertDialog.Builder(MainActivity.this);
-                LayoutInflater inflater = this.getLayoutInflater();
-                View dialogView = inflater.inflate(R.layout.number_picker_dialog, null);
-                d.setTitle("Set timer");
-                d.setMessage("In seconds");
-                d.setView(dialogView);
-                final NumberPicker numberPicker = (NumberPicker) dialogView.findViewById(R.id.dialog_number_picker);
-                numberPicker.setMaxValue(15);
-                numberPicker.setMinValue(1);
-                numberPicker.setWrapSelectorWheel(false);
-                d.setPositiveButton("Done", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        Log.d("test", "onClick: " + numberPicker.getValue());
-                    }
-                });
-                d.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                    }
-                });
-                AlertDialog alertDialog = d.create();
-                alertDialog.show();
-                break;
-            }
-        }
-
+    @Override
+    protected void onResume (){
+        super.onResume();
     }
 
 
@@ -205,9 +172,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void showHelp(){
         final AlertDialog.Builder d = new AlertDialog.Builder(MainActivity.this);
-        LayoutInflater inflater = this.getLayoutInflater();
         d.setTitle("Help");
-        //d.setView(dialogView);
         d.setMessage("Who needs help anyway ?");
         d.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
@@ -216,15 +181,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
         AlertDialog alertDialog = d.create();
         alertDialog.show();
-
     }
 
     private void showAbout(){
         final AlertDialog.Builder d = new AlertDialog.Builder(MainActivity.this);
-        LayoutInflater inflater = this.getLayoutInflater();
         d.setTitle("About");
-        //d.setView(dialogView);
-        d.setMessage("This app was developped by Jean-Pauk Marcade.");
+        d.setMessage("This app was developed by Jean-Paul Marcade.");
         d.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -234,18 +196,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         alertDialog.show();
     }
 
+
+
+    /*BLUETOOTH LOW ENERGY CONNECTION*/
     private void startScan(boolean connectDirectly) {
-        if (!hasPermissions() || mScanning) {
-            Log.d("BT", "Cannot scan now (no permissions or already scanning)");
+        if (mScanning) {
+            Log.d("BT", "Cannot scan now: already scanning)");
+            Toast toast = Toast.makeText(this.getApplicationContext(), "Already scanning.", Toast.LENGTH_SHORT);
+            toast.show();
             return;
         }
+        if (!hasPermissions()) {
+            Log.d("BT", "Requested user enables Bluetooth. Try starting the scan again.");
+            return;
+        }
+        MenuItem scanOption = menu.findItem(R.id.ScanAndConnect);
+        scanOption.setVisible(false);
+        MenuItem stopScanOption = menu.findItem(R.id.StopScan);
+        stopScanOption.setVisible(true);
+
         List<ScanFilter> filters = new ArrayList<>();
         ScanFilter scanFilter = new ScanFilter.Builder()
                 .setServiceUuid(new ParcelUuid(SERVICE_UUID))
                 .build();
         filters.add(scanFilter);
         ScanSettings settings = new ScanSettings.Builder()
-                .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+                .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
                 .build();
         mScanResults = new HashMap<>();
         mScanCallback = new BtleScanCallback(connectDirectly);
@@ -265,6 +241,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void stopScan() {
         Log.d("BT", "Stopped scanning");
         if (mScanning && mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && mBluetoothLeScanner != null) {
+            MenuItem stopScanOption = menu.findItem(R.id.StopScan);
+            stopScanOption.setVisible(false);
             mBluetoothLeScanner.stopScan(mScanCallback);
             scanComplete();
         }
@@ -277,34 +255,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void scanComplete() {
         if (mScanResults.isEmpty()) {
             Log.d("BT", "No device found");
+            Toast toast = Toast.makeText(getBaseContext(), "No device found", Toast.LENGTH_SHORT);
+            toast.show();
+            MenuItem scanOption = menu.findItem(R.id.ScanAndConnect);
+            scanOption.setVisible(true);
             return;
         }
         Set<String> deviceAddress = mScanResults.keySet();
         for (String adress :deviceAddress) {
             Log.d("BT", "Found device: " + adress);
         }
-
     }
 
     private boolean hasPermissions() {
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            requestBluetoothEnable();
-            return false;
-        } else if (!hasLocationPermissions()) {
+            Toast toast = Toast.makeText(this.getApplicationContext(), "Please activate Bluetooth first and scan again.", Toast.LENGTH_LONG);
+            toast.show();
+
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, 1);
             return false;
         }
         return true;
     }
 
-    private void requestBluetoothEnable() {
-        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        Log.d("BT", "Requested user enables Bluetooth. Try starting the scan again.");
-    }
-
-    private boolean hasLocationPermissions() {
-        return checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
 
     private void connectDevice(BluetoothDevice device) {
         GattClientCallback gattClientCallback = new GattClientCallback();
@@ -316,11 +290,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (mGatt != null) {
             mGatt.disconnect();
             mGatt.close();
+            MenuItem disconnectOption = menu.findItem(R.id.Disconnect);
+            disconnectOption.setVisible(false);
+            MenuItem scanOption = menu.findItem(R.id.ScanAndConnect);
+            scanOption.setVisible(true);
             Log.d("BT", "Disconnecting from Gatt");
         }
         else
             Log.d("BT", "Nothing to be disconnected from");
-
     }
 
 
@@ -338,6 +315,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return;
             }
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                MenuItem disconnectOption = menu.findItem(R.id.Disconnect);
+                disconnectOption.setVisible(true);
+                disconnectOption.setTitle("Disconnect from " + device.getName().substring(0, Math.min(device.getName().length(), 10)));
+                Toast toast = Toast.makeText(MainActivity.this.getApplicationContext(), "Connected to " + device.getName(), Toast.LENGTH_LONG);
+                toast.show();
                 mConnected = true;
                 Log.d("BT", "GATT Connected");
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -373,12 +355,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         private void addScanResult(ScanResult result) {
-            BluetoothDevice device = result.getDevice();
+            device = result.getDevice();
             String deviceAddress = device.getAddress();
             if (connectDirectly)
             {
-                Log.d("BT", "Found device with address: " + deviceAddress + ". Connecting directy to this one.");
+                Log.d("BT", "Found device with address: " + deviceAddress + " (" +device.getName() + "). Connecting directy to this one.");
+                MenuItem stopScanOption = menu.findItem(R.id.StopScan);
+                stopScanOption.setVisible(false);
+                mBluetoothLeScanner.stopScan(mScanCallback);
                 mScanCallback = null;
+                mHandler.removeCallbacksAndMessages(null);
                 mScanning = false;
                 mHandler = null;
                 connectDevice(device);

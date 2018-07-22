@@ -3,11 +3,21 @@
     <item android:id="@+id/ScanAndConnect"
         android:title="Scan and connect" >
     </item>
-    <item android:id="@+id/Scan"
-        android:title="Scan" >
+    <item
+        android:id="@+id/Scan"
+        android:title="Scan"
+        android:visible="false">
+
+    </item>
+    <item
+        android:id="@+id/StopScan"
+        android:title="Stop scan"
+        android:visible="false">
+
     </item>
     <item android:id="@+id/Disconnect"
-        android:title="Disconnect" >
+        android:title="Disconnect"
+        android:visible="false">
     </item>
     <item android:id="@+id/Help"
         android:title="Help" >
