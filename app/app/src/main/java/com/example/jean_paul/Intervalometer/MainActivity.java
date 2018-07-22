@@ -4,7 +4,10 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
@@ -46,7 +49,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static int REQUEST_ENABLE_BT = 1;
     private final static int REQUEST_FINE_LOCATION = 1;
     private int SCAN_PERIOD = 20000;
+    private boolean mConnected = false;
     BluetoothLeScanner mBluetoothLeScanner;
+    BluetoothGatt mGatt;
     Handler mHandler;
     HashMap mScanResults;
     BtleScanCallback mScanCallback;
@@ -74,9 +79,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.Scan:
                 startScan(false);
                 return true;
-            /*case R.id.Disconnect:
-                stopScan();
-                return true;*/
+            case R.id.Disconnect:
+                disconnectGattServer();
+                return true;
             case R.id.Help:
                 showHelp();
                 return true;
@@ -229,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         alertDialog.show();
     }
 
-    private void startScan(boolean connectDiretly) {
+    private void startScan(boolean connectDirectly) {
         if (!hasPermissions() || mScanning) {
             Log.d("BT", "Cannot scan now (no permissions or already scanning)");
             return;
@@ -243,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
                 .build();
         mScanResults = new HashMap<>();
-        mScanCallback = new BtleScanCallback();
+        mScanCallback = new BtleScanCallback(connectDirectly);
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
         mBluetoothLeScanner.startScan(filters, settings, mScanCallback);
         mScanning = true;
@@ -278,6 +283,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         for (String adress :deviceAddress) {
             Log.d("BT", "Found device: " + adress);
         }
+
     }
 
     private boolean hasPermissions() {
@@ -300,7 +306,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
+    private void connectDevice(BluetoothDevice device) {
+        GattClientCallback gattClientCallback = new GattClientCallback();
+        mGatt = device.connectGatt(this, false, gattClientCallback);
+    }
+
+    public void disconnectGattServer() {
+        mConnected = false;
+        if (mGatt != null) {
+            mGatt.disconnect();
+            mGatt.close();
+            Log.d("BT", "Disconnecting from Gatt");
+        }
+        else
+            Log.d("BT", "Nothing to be disconnected from");
+
+    }
+
+
+    private class GattClientCallback extends BluetoothGattCallback {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            super.onConnectionStateChange(gatt, status, newState);
+            if (status == BluetoothGatt.GATT_FAILURE) {
+                disconnectGattServer();
+                Log.d("BT", "GATT Failure");
+                return;
+            } else if (status != BluetoothGatt.GATT_SUCCESS) {
+                disconnectGattServer();
+                Log.d("BT", "GATT Failure");
+                return;
+            }
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                mConnected = true;
+                Log.d("BT", "GATT Connected");
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                disconnectGattServer();
+                Log.d("BT", "GATT Failure");
+            }
+        }
+    }
+
+
     private class BtleScanCallback extends ScanCallback {
+        private boolean connectDirectly;
+
+        BtleScanCallback (boolean connectDirectly)
+        {
+            this.connectDirectly=connectDirectly;
+        }
+
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             addScanResult(result);
@@ -311,16 +366,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 addScanResult(result);
             }
         }
+
         @Override
         public void onScanFailed(int errorCode) {
             Log.e("BT", "BLE Scan Failed with code " + errorCode);
         }
+
         private void addScanResult(ScanResult result) {
             BluetoothDevice device = result.getDevice();
             String deviceAddress = device.getAddress();
-            mScanResults.put(deviceAddress, device);
+            if (connectDirectly)
+            {
+                Log.d("BT", "Found device with address: " + deviceAddress + ". Connecting directy to this one.");
+                mScanCallback = null;
+                mScanning = false;
+                mHandler = null;
+                connectDevice(device);
+            }
+            else
+                mScanResults.put(deviceAddress, device);
         }
     };
-
 
 }

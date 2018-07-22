@@ -6,6 +6,9 @@
     <item android:id="@+id/Scan"
         android:title="Scan" >
     </item>
+    <item android:id="@+id/Disconnect"
+        android:title="Disconnect" >
+    </item>
     <item android:id="@+id/Help"
         android:title="Help" >
     </item>
