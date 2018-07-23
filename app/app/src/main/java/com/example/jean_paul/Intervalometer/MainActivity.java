@@ -12,6 +12,7 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
@@ -295,10 +296,14 @@ public class MainActivity extends AppCompatActivity  {
             MenuItem scanOption = menu.findItem(R.id.ScanAndConnect);
             scanOption.setVisible(true);
             Log.d("BT", "Disconnecting from Gatt");
+            Toast toast = Toast.makeText(MainActivity.this.getApplicationContext(), "Disconnected from " + device.getName(), Toast.LENGTH_SHORT);
+            toast.show();
         }
         else
             Log.d("BT", "Nothing to be disconnected from");
     }
+
+
 
 
     private class GattClientCallback extends BluetoothGattCallback {
@@ -315,13 +320,19 @@ public class MainActivity extends AppCompatActivity  {
                 return;
             }
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                MenuItem disconnectOption = menu.findItem(R.id.Disconnect);
-                disconnectOption.setVisible(true);
-                disconnectOption.setTitle("Disconnect from " + device.getName().substring(0, Math.min(device.getName().length(), 10)));
-                Toast toast = Toast.makeText(MainActivity.this.getApplicationContext(), "Connected to " + device.getName(), Toast.LENGTH_LONG);
-                toast.show();
-                mConnected = true;
                 Log.d("BT", "GATT Connected");
+                //Advertise on main UI
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        Log.d("UI thread", "I am the UI thread");
+                        Toast toast = Toast.makeText(MainActivity.this.getBaseContext(), "Connected to " + device.getName(), Toast.LENGTH_LONG);
+                        toast.show();
+                        MenuItem disconnectOption = menu.findItem(R.id.Disconnect);
+                        disconnectOption.setTitle("Disconnect from " + device.getName());
+                        disconnectOption.setVisible(true);
+                    }
+                });
+                mConnected = true;
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 disconnectGattServer();
                 Log.d("BT", "GATT Failure");
@@ -362,6 +373,8 @@ public class MainActivity extends AppCompatActivity  {
                 Log.d("BT", "Found device with address: " + deviceAddress + " (" +device.getName() + "). Connecting directy to this one.");
                 MenuItem stopScanOption = menu.findItem(R.id.StopScan);
                 stopScanOption.setVisible(false);
+                Toast toast = Toast.makeText(MainActivity.this.getApplicationContext(), "Found device " + device.getName(), Toast.LENGTH_SHORT);
+                toast.show();
                 mBluetoothLeScanner.stopScan(mScanCallback);
                 mScanCallback = null;
                 mHandler.removeCallbacksAndMessages(null);
