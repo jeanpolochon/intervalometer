@@ -29,6 +29,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -215,6 +217,8 @@ public class MainActivity extends AppCompatActivity  {
         scanOption.setVisible(false);
         MenuItem stopScanOption = menu.findItem(R.id.StopScan);
         stopScanOption.setVisible(true);
+        ProgressBar progressBar = findViewById(R.id.toolbar_progress_bar);
+        progressBar.setVisibility(View.VISIBLE);
 
         List<ScanFilter> filters = new ArrayList<>();
         ScanFilter scanFilter = new ScanFilter.Builder()
@@ -244,6 +248,8 @@ public class MainActivity extends AppCompatActivity  {
         if (mScanning && mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && mBluetoothLeScanner != null) {
             MenuItem stopScanOption = menu.findItem(R.id.StopScan);
             stopScanOption.setVisible(false);
+            ProgressBar progressBar = findViewById(R.id.toolbar_progress_bar);
+            progressBar.setVisibility(View.INVISIBLE);
             mBluetoothLeScanner.stopScan(mScanCallback);
             scanComplete();
         }
@@ -371,8 +377,11 @@ public class MainActivity extends AppCompatActivity  {
             if (connectDirectly)
             {
                 Log.d("BT", "Found device with address: " + deviceAddress + " (" +device.getName() + "). Connecting directy to this one.");
+                // @TODO This code should be removed to void duplicate code with stopScan()
                 MenuItem stopScanOption = menu.findItem(R.id.StopScan);
                 stopScanOption.setVisible(false);
+                ProgressBar progressBar = findViewById(R.id.toolbar_progress_bar);
+                progressBar.setVisibility(View.INVISIBLE);
                 Toast toast = Toast.makeText(MainActivity.this.getApplicationContext(), "Found device " + device.getName(), Toast.LENGTH_SHORT);
                 toast.show();
                 mBluetoothLeScanner.stopScan(mScanCallback);
