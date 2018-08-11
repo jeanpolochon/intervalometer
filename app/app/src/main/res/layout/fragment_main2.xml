@@ -6,19 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-
-<!--    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/settings2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end|bottom"
-        android:layout_margin="@dimen/fab_margin"
-        android:scaleType="center"
-        app:fabSize="normal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:srcCompat="@drawable/ic_settings" />-->
-
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout3"
         android:layout_width="0dp"
@@ -33,7 +20,7 @@
         app:layout_constraintVertical_chainStyle="packed">
 
         <ToggleButton
-            android:id="@+id/toggleButton1"
+            android:id="@+id/toggleButtonTotTime"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginBottom="8dp"
@@ -54,7 +41,7 @@
             android:layout_marginTop="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintHorizontal_weight="0.45"
-            app:layout_constraintLeft_toRightOf="@+id/toggleButton1"
+            app:layout_constraintLeft_toRightOf="@+id/toggleButtonTotTime"
             app:layout_constraintRight_toLeftOf="@+id/text_dot"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView" />
@@ -120,7 +107,7 @@
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout3">
 
         <ToggleButton
-            android:id="@+id/toggleButton2"
+            android:id="@+id/toggleButtonNumPic"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginBottom="8dp"
@@ -141,7 +128,7 @@
             android:layout_marginTop="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintHorizontal_weight="1"
-            app:layout_constraintLeft_toRightOf="@+id/toggleButton2"
+            app:layout_constraintLeft_toRightOf="@+id/toggleButtonNumPic"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -159,7 +146,7 @@
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout2">
 
         <ToggleButton
-            android:id="@+id/toggleButton3"
+            android:id="@+id/toggleButtonDelay"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginBottom="8dp"
@@ -180,7 +167,7 @@
             android:layout_marginTop="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintHorizontal_weight="0.45"
-            app:layout_constraintLeft_toRightOf="@+id/toggleButton3"
+            app:layout_constraintLeft_toRightOf="@+id/toggleButtonDelay"
             app:layout_constraintRight_toLeftOf="@+id/text_dot2"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView4" />
@@ -234,7 +221,7 @@
     </android.support.constraint.ConstraintLayout>
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/launch"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"

@@ -28,25 +28,15 @@ public class PlaceholderFragment1 extends Fragment implements View.OnClickListen
      * fragment.
      */
     private static final String ARG_SECTION_NUMBER = "section_number1";
-    private int delay =10 ;
+    private int delay;
     private View rootView;
     private Button buttonDelay;
     private Button buttonShoot;
 
     public PlaceholderFragment1() {
+        delay=10;
     }
 
-    /**
-     * Returns a new instance of this fragment for the given section
-     * number.
-     */
-    public static PlaceholderFragment1 newInstance(int sectionNumber) {
-        PlaceholderFragment1 fragment = new PlaceholderFragment1();
-        Bundle args = new Bundle();
-        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-        fragment.setArguments(args);
-        return fragment;
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -93,7 +83,7 @@ public class PlaceholderFragment1 extends Fragment implements View.OnClickListen
         d.setTitle("Set delay in seconds");
         //d.setMessage("In seconds");
         d.setView(dialogView);
-        final NumberPicker numberPicker = (NumberPicker) dialogView.findViewById(R.id.dialog_number_picker);
+        final NumberPicker numberPicker = dialogView.findViewById(R.id.dialog_number_picker);
         numberPicker.setMaxValue(20);
         numberPicker.setMinValue(1);
         numberPicker.setValue(delay);
